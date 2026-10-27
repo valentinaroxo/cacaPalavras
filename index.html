@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fffaf1">
+  <meta name="description" content="Descubra uma palavra de cinco letras com pistas e sem pressa.">
+  <title>Palavra! — jogo de adivinhação</title>
+  <link rel="stylesheet" href="src/styles.css">
+  <script defer src="src/game.js"></script>
+  <script defer src="src/words.js"></script>
+  <script defer src="src/persistence.js"></script>
+  <script defer src="src/app.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <p class="eyebrow">Um caderno de descobertas</p>
+      <h1>Uma palavra por vez.</h1>
+      <p class="intro">Descubra a palavra de cinco letras com calma. Cada palpite dá uma nova pista.</p>
+    </header>
+
+    <p class="storage-notice" id="storage-notice" role="status" hidden></p>
+
+    <section class="game-shell" aria-label="Jogo de palavras">
+      <header class="game-topbar">
+        <a class="wordmark" href="./" aria-label="Palavra! — início do jogo">
+          <span class="brand-mark" aria-hidden="true">✳</span>
+          <span>palavra!</span>
+        </a>
+        <p class="top-tag" id="top-tag">Uma palavra por dia · sem cronômetro</p>
+      </header>
+
+      <div class="game-layout">
+        <section class="game-main" aria-labelledby="game-title">
+          <div class="mode-switch" role="group" aria-label="Modo de jogo">
+            <button class="mode-button" id="daily-mode" type="button" aria-pressed="true">Desafio diário</button>
+            <button class="mode-button" id="practice-mode" type="button" aria-pressed="false">Praticar</button>
+          </div>
+
+          <p class="attempt-count" id="attempt-count"></p>
+          <h2 class="game-title" id="game-title"></h2>
+          <p class="game-instructions" id="game-instructions"></p>
+
+          <ol class="board" id="board" aria-label="Tabuleiro de seis tentativas"></ol>
+
+          <div class="legend" aria-label="Legenda das pistas">
+            <span><b aria-hidden="true">✓</b><span>posição certa</span></span>
+            <span><b aria-hidden="true">↔</b><span>outra posição</span></span>
+            <span><b aria-hidden="true">×</b><span>não aparece</span></span>
+          </div>
+
+          <form class="guess-form" id="guess-form" novalidate>
+            <label class="sr-only" for="guess-input">Digite uma palavra de cinco letras</label>
+            <input id="guess-input" name="guess" type="text" inputmode="text"
+              autocomplete="off" autocapitalize="characters" spellcheck="false"
+              maxlength="5" placeholder="Digite 5 letras" aria-describedby="input-help">
+            <button class="primary-button" type="submit">Enviar palpite</button>
+          </form>
+          <p class="input-help" id="input-help">Acentos não são necessários.</p>
+
+          <button class="hint-button" id="hint-button" type="button" aria-expanded="false" aria-controls="hint-panel">
+            <span aria-hidden="true">✦</span> Pedir uma pista
+          </button>
+          <div class="hint-panel" id="hint-panel" hidden></div>
+
+          <section class="round-result" id="round-result" aria-labelledby="result-title" hidden>
+            <h3 id="result-title"></h3>
+            <p class="result-answer" id="result-answer"></p>
+            <p class="result-definition" id="result-definition"></p>
+            <div class="share-area" id="share-area" hidden>
+              <button class="secondary-button share-button" id="share-button" type="button">Compartilhar sem mostrar a palavra</button>
+              <label class="share-fallback-label" for="share-fallback" id="share-fallback-label" hidden>Copie este resultado:</label>
+              <textarea class="share-fallback" id="share-fallback" rows="4" readonly hidden></textarea>
+            </div>
+            <button class="primary-button replay-button" id="replay-button" type="button" hidden>Jogar outra palavra</button>
+          </section>
+
+          <p class="live-status" id="live-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        </section>
+
+        <aside class="game-side" aria-label="Informações do jogo">
+          <section class="side-card">
+            <h3>Como ler as pistas</h3>
+            <p><strong>✓</strong> letra certa no lugar.</p>
+            <p><strong>↔</strong> letra certa em outro lugar.</p>
+            <p><strong>×</strong> letra que não aparece na palavra.</p>
+          </section>
+
+          <section class="side-card stats-card" aria-labelledby="stats-title">
+            <h3 id="stats-title">Seu progresso</h3>
+            <p class="side-copy">Só seu. Sem ranking nem competição.</p>
+            <dl class="stats">
+              <div class="stat"><dt>Jogadas</dt><dd id="stat-played">0</dd></div>
+              <div class="stat"><dt>Concluídas</dt><dd id="stat-completed">0</dd></div>
+              <div class="stat"><dt>Dias seguidos</dt><dd id="stat-streak">0</dd></div>
+              <div class="stat"><dt>Seu recorde</dt><dd id="stat-best-streak">0</dd></div>
+            </dl>
+            <p class="streak-note">O desafio do dia conta para sua sequência mesmo se você não acertar.</p>
+          </section>
+
+          <details class="side-card result-example">
+            <summary>O que acontece ao terminar?</summary>
+            <p>Você vê a palavra correta e uma explicação breve do significado.</p>
+          </details>
+        </aside>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <p>Desafio diário igual para todos. Uma nova palavra a cada dia UTC.</p>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+# Revisão independente de requisitos
+
+**Data:** 2026-10-27  
+**Escopo:** comparação do jogo funcional com `PRD.md`, `SPECS.md` e o protótipo aprovado `prototypes/index.html`.  
+**Limite desta revisão:** somente leitura e documentação; nenhum código do jogo foi alterado.
+
+## Método e evidências
+
+- Inspecionados os documentos, o HTML de produção, os arquivos em `src/`, os testes e o protótipo.
+- Executado `node --test` nesta revisão: **9 testes passaram, 0 falharam**. Isso cobre domínio e persistência unitária; não substitui testes de integração ou testes humanos.
+- Inspecionada a árvore de acessibilidade do jogo com uma tentativa preenchida. A linha da tentativa expõe as letras, mas não os estados do feedback.
+- Verificadas larguras de 320, 390, 760 e 1280 px no navegador: a largura do documento permaneceu dentro da viewport em todos os casos.
+- Calculadas algumas combinações principais de contraste a partir das cores declaradas no CSS. Isso não é uma auditoria completa de contraste ou conformidade WCAG.
+
+### Significado dos status
+
+- **Atendido:** há evidência direta no código e/ou teste suficiente para o critério descrito.
+- **Parcialmente atendido:** a implementação cobre parte do critério, mas falta evidência ou há uma limitação concreta.
+- **Não atendido:** a evidência demonstra divergência do requisito.
+- **Não verificado:** os arquivos disponíveis não permitem confirmar o requisito.
+
+## Matriz de requisitos
+
+| ID | Requisito e fonte | Status | Evidência encontrada |
+|---|---|---|---|
+| R01 | Público de 8–17 anos; palavras, pistas e definições apropriadas à idade (PRD, §§2, 6, 8) | **Não verificado** | `src/words.js` contém 77 respostas com pistas e definições, mas não há evidência de revisão independente do vocabulário por idade nem de teste com o público-alvo. |
+| R02 | Português do Brasil, experiência casual e sem cronômetro (PRD, §§1–2, 6) | **Atendido** | `index.html` define `lang="pt-BR"`; a interface e as mensagens estão em português; `src/app.js` exibe “sem cronômetro”. Não foi encontrado mecanismo de contagem regressiva. |
+| R03 | Desafio diário e modo de prática identificáveis e alternáveis (PRD, §7) | **Atendido** | Os botões de modo estão em `index.html`; `src/app.js` mantém `dailyRound` e `practiceRound`, atualiza `aria-pressed` e renderiza instruções próprias por modo. |
+| R04 | Resposta com exatamente cinco letras (PRD, §6) | **Atendido** | `src/words.js` fornece as respostas; `tests/game.test.js` verifica que suas formas normalizadas têm cinco letras e não colidem. |
+| R05 | No máximo seis tentativas; vitória antes do limite e derrota ao esgotá-las (PRD, §6) | **Atendido** | `src/game.js` define `MAX_GUESSES = 6` e encerra após a sexta tentativa; o teste “winning and losing rounds finish at the correct time” cobre vitória e derrota. |
+| R06 | Aceitar palavras reconhecidas de cinco letras e explicar entradas inválidas sem gastar tentativa (PRD, §§5–6, critérios de aceite) | **Parcialmente atendido** | `validateGuess` verifica forma e presença no conjunto curado; a UI apresenta mensagens para entrada vazia, tamanho, palavra desconhecida e rodada encerrada (`src/app.js`). Testes cobrem os códigos de validação, mas o conjunto de 149 palpites adicionais é limitado e não representa o vocabulário completo; palavras válidas fora dele serão recusadas. |
+| R07 | Ignorar acentos/cedilha na comparação e preservar a grafia correta da resposta (PRD, §6) | **Atendido** | `normalizeWord` usa normalização Unicode e remoção de diacríticos (`src/game.js`); testes verificam “dança”, “lápis” e “saúde”; a resposta renderizada usa `puzzle.answer` (`src/app.js`). |
+| R08 | Feedback correto, presente em outra posição ou ausente, respeitando letras repetidas (PRD, §6; SPECS, §8) | **Atendido** | `calculateFeedback` faz duas passagens e consome contagens (`src/game.js`). Testes cobrem `LUGAR`/`LLLXX` e `SABOR`/`ROSAS`. |
+| R09 | Palpite correto encerra com vitória; seis erros encerram com derrota e revelam resposta/definição (PRD, §6) | **Atendido** | `submitGuess` decide `won`/`lost` (`src/game.js`); `renderResult` exibe mensagem, resposta e definição (`src/app.js`). Teste de domínio verifica os dois desfechos; não há teste automatizado de integração para o conteúdo visual final. |
+| R10 | Pista contextual opcional, sem penalidade de tentativa (PRD, §6) | **Atendido** | `revealHint` alterna a pista e persiste o estado sem alterar `guesses` (`src/app.js`). Há botão associado ao painel de pista em `index.html`. |
+| R11 | Definição curta no encerramento, tanto em vitória como derrota (PRD, §6) | **Atendido** | `renderResult` preenche a resposta e a definição quando o status não é `playing` (`src/app.js`). As definições existem junto às respostas em `src/words.js`. |
+| R12 | Uma palavra comum por data UTC no desafio diário (PRD, §7; SPECS, §6) | **Parcialmente atendido** | `selectDailyPuzzle` seleciona deterministicamente por data UTC e banco (`src/game.js`); o teste verifica estabilidade na mesma data e avanço no dia seguinte. A seleção é local e cíclica sobre 77 respostas, portanto repete após 77 dias e depende de todos os clientes terem exatamente a mesma versão do código/banco. |
+| R13 | Retomar rodada diária e atualizar para novo dia UTC (SPECS, §§6, 9) | **Parcialmente atendido** | O estado diário é salvo e restaurado; `refreshUtcDate` é chamado ao enviar palpite, pedir pista, alternar modo e retornar à aba (`src/app.js`). Não foi executado teste automatizado de integração simulando a virada de data; uma página aberta e visível sem interação só reflete a nova data quando uma dessas ações ocorrer. |
+| R14 | Estatísticas pessoais de partidas jogadas e concluídas (PRD, §7) | **Atendido** | `updateStatsForAcceptedGuess` e `updateStatsForCompletion` atualizam contadores (`src/game.js`); `renderStats` os mostra (`src/app.js`); as flags da rodada evitam contagem repetida no fluxo normal. A suíte atual não verifica esses contadores por fluxo completo de UI. |
+| R15 | Streak atual e recorde por dias consecutivos concluídos; vitória e derrota contam, prática não (PRD, §7; SPECS, §9) | **Atendido** | `updateStatsForCompletion` atualiza sequência somente para `daily`; `visibleDailyStreak` expira a sequência após o intervalo previsto (`src/game.js`). O teste “daily streak counts completed days regardless of win or loss and excludes practice” cobre sequência, prática e lacuna. |
+| R16 | Compartilhamento opcional do resultado diário, sem resposta ou dado pessoal (PRD, §§5, 7, 9) | **Parcialmente atendido** | O botão só aparece para resultado diário (`src/app.js`); `shareText` constrói o resumo a partir do placar, data e tentativas, sem incluir `puzzle.answer`; há caminhos Web Share, clipboard e cópia manual. A proteção contra inclusão da resposta e os fallbacks não são cobertos pela suíte `node --test` executada nesta revisão. |
+| R17 | Sem conta; progresso local e privacidade por padrão (PRD, §§4, 9) | **Atendido** | Não há autenticação ou backend; a persistência usa `localStorage` (`src/persistence.js`). O código revisado não contém envio de dados pessoais a um serviço. O escopo desta verificação foi a aplicação fornecida, não uma auditoria de infraestrutura de hospedagem. |
+| R18 | Direção visual aprovada “Caderno de pistas” (papel, azul-noite, verde-petróleo, amarelo, cartões e pauta discreta) (PRD, §8; protótipo) | **Atendido** | `src/styles.css` usa fundo claro pautado, cartões, texto azul-noite, ação verde-petróleo e amarelo para letras presentes. A composição em área de jogo e painel de informações corresponde à prévia do protótipo. Não foi feita comparação pixel a pixel. |
+| R19 | Layout responsivo sem rolagem horizontal em telas estreitas (PRD, §8; SPECS, §10) | **Atendido** | `src/styles.css` reorganiza layout a 760 px, 480 px e 350 px. No navegador, `documentElement.scrollWidth` ficou em 305/320, 375/390, 745/760 e 1265/1280 px. |
+| R20 | Operação por teclado e foco perceptível (PRD, §8 e critérios de aceite) | **Parcialmente atendido** | Formulário, botões, `details/summary` e link usam elementos nativos; `src/styles.css` define `:focus-visible`. Não foi feita navegação completa por teclado nesta revisão. |
+| R21 | Estado de cada letra compreensível por tecnologia assistiva, não apenas por cor (PRD, §6 e §8; SPECS, §11) | **Não atendido** | `renderBoard` coloca `aria-label` em `span` genérico, mas não atribui papel semântico ao tile (`src/app.js`). Na árvore de acessibilidade observada após um palpite, a tentativa expõe somente as letras (“A B R A M”), sem “posição correta/presente/ausente”. O protótipo aprovado usa `role="img"` e rótulos explícitos por tile (`prototypes/index.html`, linhas 1150–1154). |
+| R22 | Contraste mínimo de 4,5:1 para texto comum e 3:1 para texto grande (PRD, §8; SPECS, §11) | **Parcialmente atendido** | As combinações principais medidas excedem 4,5:1: texto principal/superfície 14,31:1; texto secundário/superfície 9,05:1; texto branco/verde 6,37:1; texto escuro/amarelo 8,67:1; texto escuro/estado ausente 11,29:1. Não foi calculada a razão de todas as combinações, estados, bordas e foco da interface. |
+| R23 | Alvos acionáveis com pelo menos 24 × 24 CSS px, preferencialmente maiores (PRD, §8) | **Atendido** | CSS define botões de modo com altura mínima de 44 px, controles principais com 48 px e campo de entrada com 52 px (`src/styles.css`). |
+| R24 | Utilização com ampliação de texto a 200% sem perda de conteúdo/funcionalidade (PRD, §8) | **Não verificado** | Não foi executado teste de zoom ou de aumento de texto a 200%. Os breakpoints e a ausência de overflow em larguras verificadas não comprovam esse critério. |
+| R25 | Movimento reduzido respeitado; animação não necessária para entender resultados (PRD, §8; SPECS, §11) | **Parcialmente atendido** | `src/styles.css` inclui `@media (prefers-reduced-motion: reduce)` reduzindo transições/animações. Não foi verificado no navegador com a preferência ativada; a grade não depende de animações para comunicar o resultado. |
+| R26 | Sem cronômetro ou pressão temporal (PRD, §§1, 6, 8) | **Atendido** | A interface declara “sem cronômetro”; não foi encontrado timer ou expiração de rodada. A atualização de data UTC não força envio nem encerra a rodada ativa de prática. |
+| R27 | Protótipo preservado como referência, sem confundir prévia com jogo funcional (SPECS, §1) | **Atendido** | `prototypes/index.html` continua rotulado como protótipo visual; o jogo funcional está em `index.html` e na pasta `src/`. O layout e a paleta foram levados para a aplicação, enquanto a amostra estática do protótipo não é tratada como regra de jogo. |
+| R28 | Testes de regras, validação, repetição, estatísticas e persistência (SPECS, §13) | **Parcialmente atendido** | `node --test`: **9/9 passaram** nesta revisão. Há testes de normalização, validação, feedback repetido, vitória/derrota, seleção diária, streak e persistência básica. Não há testes automatizados de UI, compartilhamento, acessibilidade, virada UTC em execução ou responsividade. |
+
+## Síntese
+
+O núcleo das regras de partida, seleção diária, estatísticas/streak e layout responsivo tem evidência no código e cobertura unitária pertinente. O principal desvio confirmado é a ausência de exposição acessível do estado de feedback por tile na árvore de acessibilidade. Permanecem sem verificação adequada a revisão etária das palavras, o uso com zoom a 200%, navegação completa por teclado e a garantia da qualidade lexical além da lista curada.
